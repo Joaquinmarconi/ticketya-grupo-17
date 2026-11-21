@@ -1,12 +1,51 @@
-# TicketYa - Listado de Endpoints (Entrega 1)
+# TicketYa - Listado de Endpoints (Entrega 2)
 
 Todas las rutas `/api/**` se llaman a través del **API Gateway** (`http://localhost:8080`).
 La documentación OpenAPI completa está en **http://localhost:8080/swagger-ui.html**, donde se elige `catalogo-service` o
 `ventas-service` arriba a la derecha. También está en cada servicio: `http://localhost:8081/swagger-ui.html` y
 `http://localhost:8082/swagger-ui.html`. El JSON OpenAPI está en `/v3/api-docs`.
 
-En la Entrega 1 no hay autenticación: el usuario se identifica con los encabezados `X-User-Id` y `X-User-Role`
-(`ADMIN`, `ORGANIZADOR`, `CLIENTE`).
+## Autenticación y autorización
+
+Las rutas protegidas requieren un JWT en el encabezado:
+
+```http
+Authorization: Bearer <token>
+```
+
+Obtener un token con `POST /api/auth/login`:
+
+```json
+{ "username": "cliente-1", "password": "cliente123" }
+```
+
+La respuesta contiene `token`, `usuarioId`, `username`, `rol` y `expiresInMinutes`.
+El endpoint `POST /api/auth/register` registra usuarios `CLIENTE` u `ORGANIZADOR`;
+no se permite registrarse como `ADMIN` ni `PERSONAL_ACCESO`.
+
+| Rol | Permisos principales |
+|---|---|
+| `CLIENTE` | Reservas, compras y solicitud de devolución |
+| `ORGANIZADOR` | Crear lugares y eventos, publicar sus eventos y consultar reportes propios |
+| `ADMIN` | Gestión administrativa, resolver devoluciones y consultar reportes |
+| `PERSONAL_ACCESO` | Validar códigos QR |
+
+Las consultas `GET /api/eventos/**` y `GET /api/lugares/**` son públicas.
+Las rutas protegidas responden `401` si falta el token o es inválido/vencido, y `403`
+si el usuario autenticado no tiene el rol o la propiedad requerida. La identidad se toma
+del token: no enviar `X-User-Id` ni `X-User-Role`.
+
+Usuarios semilla para desarrollo:
+
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `cliente-1` | `cliente123` | `CLIENTE` |
+| `org-1` | `organizador123` | `ORGANIZADOR` |
+| `admin-1` | `admin123` | `ADMIN` |
+| `acceso-1` | `acceso123` | `PERSONAL_ACCESO` |
+
+El Gateway y ambos servicios deben compartir el mismo `JWT_SECRET`. Catálogo y ventas
+deben compartir `INTERNAL_SERVICE_SECRET` para la comunicación interna.
 
 Los errores se devuelven en formato **ProblemDetail** (RFC 9457):
 
@@ -16,20 +55,32 @@ Los errores se devuelven en formato **ProblemDetail** (RFC 9457):
 
 ---
 
+## Autenticación (API Gateway, puerto 8080)
+
+| Método | Ruta | Acceso | Body | Respuestas |
+|---|---|---|---|---|
+| POST | `/api/auth/login` | Público | `username`, `password` | 200, 401 |
+| POST | `/api/auth/register` | Público | `username`, `password`, `role` (`CLIENTE` u `ORGANIZADOR`) | 201, 400, 409 |
+
+La colección Postman permite iniciar sesión con cualquiera de los usuarios semilla y
+guarda el token en la variable `jwt`.
+
+---
+
 ## catalogo-service (puerto 8081)
 
 | Método | Ruta | Parámetros | Respuestas |
 |---|---|---|---|
-| POST | `/api/lugares` | Header `X-User-Role` (ADMIN u ORGANIZADOR). Body `LugarDTO` | 201, 403 |
-| GET | `/api/lugares` | - | 200 |
-| GET | `/api/lugares/{id}` | Path `id` | 200, 404 |
-| POST | `/api/eventos` | Headers `X-User-Id`, `X-User-Role` (ORGANIZADOR). Body `EventoCreateDTO` | 201, 403, 404 |
-| PUT | `/api/eventos/{id}/publicar` | Path `id`. Headers `X-User-Id`, `X-User-Role` (ORGANIZADOR dueño) | 200, 403, 404, 409 |
-| PUT | `/api/eventos/{id}/suspender` | Path `id`. Header `X-User-Role` (ADMIN) | 200, 403, 404, 409 |
-| PUT | `/api/eventos/{id}/reactivar` | Path `id`. Header `X-User-Role` (ADMIN) | 200, 403, 404, 409 |
-| PUT | `/api/eventos/{id}/cancelar` | Path `id`. Headers `X-User-Id`, `X-User-Role` (ADMIN u ORGANIZADOR dueño) | 200, 403, 404, 409, 503 |
-| GET | `/api/eventos` | Query: `q`, `tipo`, `organizadorId`, `participante`, `ciudad`, `fechaDesde`, `fechaHasta`, `orden=relevancia`, `page`, `size`, `sort` | 200 |
-| GET | `/api/eventos/{id}` | Path `id` | 200, 404 |
+| POST | `/api/lugares` | `ADMIN` u `ORGANIZADOR`; body `LugarDTO` | 201, 401, 403 |
+| GET | `/api/lugares` | Público | 200 |
+| GET | `/api/lugares/{id}` | Público; path `id` | 200, 404 |
+| POST | `/api/eventos` | `ORGANIZADOR`; body `EventoCreateDTO` | 201, 401, 403, 404 |
+| PUT | `/api/eventos/{id}/publicar` | `ORGANIZADOR` dueño; path `id` | 200, 401, 403, 404, 409 |
+| PUT | `/api/eventos/{id}/suspender` | `ADMIN`; path `id` | 200, 401, 403, 404, 409 |
+| PUT | `/api/eventos/{id}/reactivar` | `ADMIN`; path `id` | 200, 401, 403, 404, 409 |
+| PUT | `/api/eventos/{id}/cancelar` | `ADMIN` u `ORGANIZADOR` dueño; path `id` | 200, 401, 403, 404, 409, 503 |
+| GET | `/api/eventos` | Público; filtros `q`, `tipo`, `organizadorId`, `participante`, `ciudad`, fechas, orden y paginación | 200 |
+| GET | `/api/eventos/{id}` | Público; path `id` | 200, 404 |
 
 ### Crear lugar - `POST /api/lugares`
 
@@ -57,7 +108,7 @@ Response `201`:
 
 ### Crear evento - `POST /api/eventos`
 
-Request (header `X-User-Id: org-1`):
+Request: `Authorization: Bearer <token de ORGANIZADOR>`
 ```json
 {
   "nombre": "Recital de Prueba",
@@ -110,17 +161,19 @@ Response `200` (página de Spring Data):
 
 | Método | Ruta | Parámetros | Respuestas |
 |---|---|---|---|
-| POST | `/api/reservas` | Header `X-User-Id`. Body `ReservaCreateDTO` | 201, 400, 409 |
-| GET | `/api/reservas` | Header `X-User-Id` | 200 |
-| POST | `/api/compras/confirmar` | Header `X-User-Id`. Body `ConfirmarCompraDTO` | 200, 402, 403, 404, 409 |
-| GET | `/api/compras` | Header `X-User-Id` | 200 |
-| POST | `/api/devoluciones/entradas/{entradaId}` | Path `entradaId`. Header `X-User-Id`. Body `SolicitudDevolucionDTO` | 201, 403, 404, 409 |
-| PUT | `/api/devoluciones/{devolucionId}/resolver` | Path `devolucionId`. Header `X-User-Role` (ADMIN). Body `ResolverDevolucionDTO` | 200, 400, 403, 404, 409 |
-| POST | `/internal/eventos/{eventoId}/cancelacion` | Path `eventoId`. **Solo entre servicios, el gateway no la expone** | 200 |
+| POST | `/api/reservas` | `CLIENTE`; body `ReservaCreateDTO` | 201, 400, 401, 403, 409 |
+| GET | `/api/reservas` | `CLIENTE`; lista sus reservas | 200, 401, 403 |
+| POST | `/api/compras/confirmar` | `CLIENTE`; body `ConfirmarCompraDTO` | 200, 401, 402, 403, 404, 409 |
+| GET | `/api/compras` | `CLIENTE`; lista sus compras | 200, 401, 403 |
+| POST | `/api/devoluciones/entradas/{entradaId}` | `CLIENTE`; body `SolicitudDevolucionDTO` | 201, 401, 403, 404, 409 |
+| PUT | `/api/devoluciones/{devolucionId}/resolver` | `ADMIN`; body `ResolverDevolucionDTO` | 200, 400, 401, 403, 404, 409 |
+| POST | `/api/accesos/validar-qr` | `PERSONAL_ACCESO` o `ADMIN` | 200, 400, 401, 403, 404, 409 |
+| GET | `/api/reportes/eventos/{eventoId}` | `ORGANIZADOR` dueño o `ADMIN` | 200, 401, 403, 404 |
+| POST | `/internal/eventos/{eventoId}/cancelacion` | Interno; requiere `X-Internal-Token`; no pasa por Gateway | 200, 401 |
 
 ### Crear reserva - `POST /api/reservas`
 
-Request (header `X-User-Id: cliente-1`):
+Request: `Authorization: Bearer <token de CLIENTE>`
 ```json
 {
   "eventoId": 1,
@@ -179,7 +232,7 @@ Response `201`:
 
 ### Resolver devolución - `PUT /api/devoluciones/{devolucionId}/resolver`
 
-Request (header `X-User-Role: ADMIN`):
+Request: `Authorization: Bearer <token de ADMIN>`
 ```json
 { "aprobar": true }
 ```
@@ -187,7 +240,9 @@ Response `200`: la devolución con `"estado": "APROBADA"`, `"transaccionReintegr
 
 ### Cancelación interna - `POST /internal/eventos/{eventoId}/cancelacion`
 
-La llama `catalogo-service` al cancelar un evento. Response `200`:
+La llama `catalogo-service` al cancelar un evento con `X-Internal-Token`, cuyo valor
+proviene de `INTERNAL_SERVICE_SECRET`. No incluir esta credencial en colecciones públicas.
+Response `200`:
 ```json
 { "eventoId": 1, "reservasCanceladas": 1, "entradasReintegradas": 3, "clientesNotificados": 2 }
 ```

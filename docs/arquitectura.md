@@ -1,15 +1,15 @@
-# TicketYa - Documentación de Diseño y Arquitectura (Entrega 1)
+# TicketYa - Documentación de Diseño y Arquitectura (Entrega 2)
 
 ## 1. Diagrama de Módulos de la Arquitectura de Solución
 
 ```mermaid
 graph TD
-    Client(["Cliente / Web / Postman"]) -->|"http :8080"| Gateway["API Gateway<br/>(puerto 8080)"]
+    Client(["Cliente / Web / Postman"]) -->|"HTTP + JWT"| Gateway["API Gateway<br/>(puerto 8080)"]
 
     subgraph RedInterna ["Red Interna de Microservicios"]
         Gateway -->|"/api/eventos/**<br/>/api/lugares/**"| CatService["catalogo-service<br/>(puerto 8081)"]
-        Gateway -->|"/api/reservas/**<br/>/api/compras/**<br/>/api/devoluciones/**"| VenService["ventas-service<br/>(puerto 8082)"]
-        CatService -.->|"POST /internal/eventos/{id}/cancelacion"| VenService
+        Gateway -->|"/api/reservas/**<br/>/api/compras/**<br/>/api/devoluciones/**<br/>/api/accesos/**<br/>/api/reportes/**"| VenService["ventas-service<br/>(puerto 8082)"]
+        CatService -.->|"POST /internal/eventos/{id}/cancelacion<br/>X-Internal-Token"| VenService
     end
 
     subgraph BasesDatos ["Persistencia H2 Embebida"]
@@ -21,6 +21,19 @@ graph TD
         VenService -->|"Mock"| Pasarela["Pasarela de Pagos"]
     end
 ```
+
+### 1.1 Autenticación y confianza entre servicios
+
+- `POST /api/auth/login` y `POST /api/auth/register` son atendidos por el Gateway.
+- El login emite un JWT firmado con `JWT_SECRET`; usuarios y hashes BCrypt se guardan en la base H2 del Gateway.
+- El Gateway valida el token, deriva de él el usuario y el rol, y propaga la identidad verificada. Los headers de identidad que pudiera enviar el cliente no son fuente de autenticación.
+- `catalogo-service` y `ventas-service` validan el JWT recibido con el mismo `JWT_SECRET`.
+- Los servicios usan los claims del token para autorización y ownership. Las búsquedas públicas `GET` de eventos y lugares no requieren token.
+- La cancelación interna de catálogo a ventas requiere además `X-Internal-Token`, configurado mediante `INTERNAL_SERVICE_SECRET`. Esa credencial no se incluye en Postman.
+- Para ejecutar localmente, Gateway, catálogo y ventas comparten `JWT_SECRET`; catálogo y ventas comparten `INTERNAL_SERVICE_SECRET`.
+
+Los valores de fallback de las configuraciones son para desarrollo local. Se pueden reemplazar
+por variables de entorno al iniciar los procesos.
 
 ---
 
@@ -275,9 +288,9 @@ sequenceDiagram
     participant Ven as ventas-service :8082
     participant Pagos as Pasarela de Pagos Mock
 
-    Admin->>GW: PUT /api/eventos/{id}/cancelar (X-User-Role: ADMIN)
-    GW->>Cat: cancelar evento
-    Cat->>Ven: POST /internal/eventos/{id}/cancelacion
+    Admin->>GW: PUT /api/eventos/{id}/cancelar (Bearer JWT)
+    GW->>Cat: Validar JWT, rol y usuario
+    Cat->>Ven: POST /internal/eventos/{id}/cancelacion (X-Internal-Token)
     activate Ven
     Ven->>Ven: Reservas PENDIENTES → CANCELADA (se liberan los lugares)
     loop Por cada entrada VENDIDA

@@ -1,6 +1,6 @@
 # TicketYa - Plataforma de Venta de Entradas (TUDAI - UNICEN)
 
-**Trabajo Práctico de Arquitectura Web (2026) - Entrega 1 (Core del Sistema)**
+**Trabajo Práctico de Arquitectura Web (2026) - Entrega 2 (evolución del core)**
 
 ---
 
@@ -68,7 +68,11 @@ cd api-gateway
 
 ### Autenticación JWT
 
-1. Obtener un token:
+Los endpoints protegidos usan `Authorization: Bearer <token>`. En Postman, ejecutar primero
+el request **Login** del rol que se va a probar; el script de respuesta guarda el JWT en la
+variable `jwt`. Ejecutar nuevamente el login al cambiar de rol.
+
+Ejemplo para obtener un token:
 ```powershell
 Invoke-RestMethod -Method Post -Uri "http://localhost:8080/api/auth/login" `
   -ContentType "application/json" `
@@ -92,7 +96,8 @@ Authorization: Bearer <token>
 
 El gateway valida el JWT, reemplaza cualquier `X-User-Id` o `X-User-Role` enviado por el cliente y propaga los datos verificados al microservicio. También genera o conserva `X-Correlation-Id`.
 
-En producción se debe definir una clave propia mediante `JWT_SECRET`; no usar la clave por defecto.
+Los valores de fallback incluidos en los archivos de configuración son solo para desarrollo
+local y la entrega universitaria. En otro entorno pueden reemplazarse mediante `JWT_SECRET`.
 
 Las llamadas internas entre microservicios usan una credencial separada:
 
@@ -108,6 +113,11 @@ $env:JWT_SECRET="ticketya-jwt-clave-secreta-de-al-menos-32-caracteres"
 $env:INTERNAL_SERVICE_SECRET="ticketya-interno-clave-secreta-de-al-menos-32-caracteres"
 ```
 
+La colección Postman actualizada está en
+[docs/TicketYa-Entrega1.postman_collection.json](docs/TicketYa-Entrega1.postman_collection.json).
+Incluye login por rol y guarda el JWT automáticamente. No incluye el secreto de comunicación
+interna.
+
 ---
 
 ## Documentación Técnica Adicional
@@ -117,7 +127,7 @@ Los diagramas detallados exigidos por la cátedra se encuentran en el directorio
 * **Diagrama Entidad-Relación (DER):** Esquema relacional, referencias lógicas entre microservicios y datos solapados.
 * **Features y User Stories:** [docs/user-stories.md](docs/user-stories.md), con criterios de aceptación.
 * **Listado de Endpoints:** [docs/endpoints.md](docs/endpoints.md), con parámetros, códigos de respuesta y ejemplos.
-* **Colección de Postman y Datos de Prueba (Seed Data):** [docs/TicketYa-Entrega1.postman_collection.json](docs/TicketYa-Entrega1.postman_collection.json) (importar en Postman; incluye la carpeta `0. Datos de Prueba (Seed Data)` para poblar lugares, sectores y eventos, y carpetas para probar búsquedas, reservas, compras y devoluciones).
+* **Colección de Postman y Datos de Prueba (Seed Data):** [docs/TicketYa-Entrega1.postman_collection.json](docs/TicketYa-Entrega1.postman_collection.json) (importar en Postman; incluye login JWT, seed data, búsquedas, reservas, compras, devoluciones, reportes y control de acceso).
 
 ### Documentación OpenAPI (Swagger)
 Con los servicios levantados, entrar a **http://localhost:8080/swagger-ui.html** y elegir `catalogo-service` o `ventas-service` arriba a la derecha.

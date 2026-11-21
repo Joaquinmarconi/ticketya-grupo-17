@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "b7e91c40-8a1f-4e3a-9c01-ticketya2026",
-    "name": "TicketYa - Entrega 1 (Core del Sistema)",
-    "description": "Colección de requests y datos de prueba (seed data) para probar todos los flujos de la Entrega 1 a través del API Gateway (http://localhost:8080).",
+    "name": "TicketYa - Entrega 2 (JWT y core)",
+    "description": "Requests para probar TicketYa por API Gateway (http://localhost:8080). Ejecutar el login del rol requerido antes de las operaciones protegidas; la colecci?n almacena el JWT autom?ticamente en variables.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -10,9 +10,421 @@
       "key": "baseUrl",
       "value": "http://localhost:8080",
       "type": "string"
+    },
+    {
+      "key": "jwt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "jwtCliente",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "jwtOrganizador",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "jwtAdmin",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "jwtPersonal_acceso",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
+    {
+      "name": "Autenticaci?n JWT",
+      "description": "Ejecutar el login correspondiente antes de las operaciones protegidas. La colecci?n usa {{jwt}} como bearer token; cada login tambi?n guarda el token por rol.",
+      "item": [
+        {
+          "name": "Login CLIENTE",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"cliente-1\",\"password\":\"cliente123\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesi?n como CLIENTE. Guarda el JWT en jwt y jwtCliente. Ejecutar antes de requests que requieren este rol."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login correcto\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test(\"El rol autenticado es CLIENTE\", function () {",
+                  "    pm.expect(body.rol).to.eql(\"CLIENTE\");",
+                  "});",
+                  "pm.collectionVariables.set(\"jwt\", body.token);",
+                  "pm.collectionVariables.set(\"jwtCliente\", body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login ORGANIZADOR",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"org-1\",\"password\":\"organizador123\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesi?n como ORGANIZADOR. Guarda el JWT en jwt y jwtOrganizador. Ejecutar antes de requests que requieren este rol."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login correcto\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test(\"El rol autenticado es ORGANIZADOR\", function () {",
+                  "    pm.expect(body.rol).to.eql(\"ORGANIZADOR\");",
+                  "});",
+                  "pm.collectionVariables.set(\"jwt\", body.token);",
+                  "pm.collectionVariables.set(\"jwtOrganizador\", body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login ADMIN",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"admin-1\",\"password\":\"admin123\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesi?n como ADMIN. Guarda el JWT en jwt y jwtAdmin. Ejecutar antes de requests que requieren este rol."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login correcto\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test(\"El rol autenticado es ADMIN\", function () {",
+                  "    pm.expect(body.rol).to.eql(\"ADMIN\");",
+                  "});",
+                  "pm.collectionVariables.set(\"jwt\", body.token);",
+                  "pm.collectionVariables.set(\"jwtAdmin\", body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login PERSONAL_ACCESO",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"acceso-1\",\"password\":\"acceso123\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Inicia sesi?n como PERSONAL_ACCESO. Guarda el JWT en jwt y jwtPersonal_acceso. Ejecutar antes de requests que requieren este rol."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Login correcto\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.test(\"El rol autenticado es PERSONAL_ACCESO\", function () {",
+                  "    pm.expect(body.rol).to.eql(\"PERSONAL_ACCESO\");",
+                  "});",
+                  "pm.collectionVariables.set(\"jwt\", body.token);",
+                  "pm.collectionVariables.set(\"jwtPersonal_acceso\", body.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Registrar nuevo cliente (username din?mico)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Registro p?blico de un usuario CLIENTE. El username incluye timestamp para evitar duplicados al repetir el request.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"cliente-{{$timestamp}}\",\n  \"password\": \"password123\",\n  \"role\": \"CLIENTE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Registro correcto\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set(\"jwt\", body.token);",
+                  "pm.collectionVariables.set(\"jwtCliente\", body.token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pruebas de seguridad JWT",
+      "description": "Respuestas esperadas para autenticaci?n y autorizaci?n.",
+      "item": [
+        {
+          "name": "Reserva sin JWT (esperado: 401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "description": "Verifica que una ruta protegida rechace solicitudes sin token.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Respuesta HTTP 401\", function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Organizador intenta reservar (esperado: 403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/reservas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
+            },
+            "description": "Primero ejecuta Login ORGANIZADOR. El rol autenticado no puede usar operaciones de CLIENTE.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwtOrganizador}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Respuesta HTTP 403\", function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
     {
       "name": "0. Datos de Prueba (Seed Data)",
       "description": "Ejecutar en orden para poblar las bases con lugares, sectores (numerado y campo) y eventos publicados.",
@@ -22,9 +434,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-User-Id", "value": "org-1" },
-              { "key": "X-User-Role", "value": "ORGANIZADOR" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -32,8 +445,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/lugares",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "lugares"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lugares"
+              ]
             }
           }
         },
@@ -42,9 +460,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-User-Id", "value": "org-1" },
-              { "key": "X-User-Role", "value": "ORGANIZADOR" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -52,8 +471,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/eventos",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "eventos"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "eventos"
+              ]
             }
           }
         },
@@ -61,14 +485,18 @@
           "name": "0.3 Publicar Evento 1",
           "request": {
             "method": "PUT",
-            "header": [
-              { "key": "X-User-Id", "value": "org-1" },
-              { "key": "X-User-Role", "value": "ORGANIZADOR" }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/eventos/1/publicar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "eventos", "1", "publicar"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "eventos",
+                "1",
+                "publicar"
+              ]
             }
           }
         },
@@ -77,9 +505,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-User-Id", "value": "org-1" },
-              { "key": "X-User-Role", "value": "ORGANIZADOR" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -87,8 +516,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/eventos",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "eventos"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "eventos"
+              ]
             }
           }
         },
@@ -96,14 +530,18 @@
           "name": "0.5 Publicar Evento 2",
           "request": {
             "method": "PUT",
-            "header": [
-              { "key": "X-User-Id", "value": "org-1" },
-              { "key": "X-User-Role", "value": "ORGANIZADOR" }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/eventos/2/publicar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "eventos", "2", "publicar"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "eventos",
+                "2",
+                "publicar"
+              ]
             }
           }
         }
@@ -119,8 +557,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/lugares",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "lugares"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "lugares"
+              ]
             }
           }
         },
@@ -131,12 +574,26 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/eventos?ciudad=Tandil&tipo=RECITAL&sort=fechaHora,asc",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "eventos"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "eventos"
+              ],
               "query": [
-                { "key": "ciudad", "value": "Tandil" },
-                { "key": "tipo", "value": "RECITAL" },
-                { "key": "sort", "value": "fechaHora,asc" }
+                {
+                  "key": "ciudad",
+                  "value": "Tandil"
+                },
+                {
+                  "key": "tipo",
+                  "value": "RECITAL"
+                },
+                {
+                  "key": "sort",
+                  "value": "fechaHora,asc"
+                }
               ]
             }
           }
@@ -148,11 +605,22 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/eventos?ciudad=Tandil&sort=precioDesde,asc",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "eventos"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "eventos"
+              ],
               "query": [
-                { "key": "ciudad", "value": "Tandil" },
-                { "key": "sort", "value": "precioDesde,asc" }
+                {
+                  "key": "ciudad",
+                  "value": "Tandil"
+                },
+                {
+                  "key": "sort",
+                  "value": "precioDesde,asc"
+                }
               ]
             }
           }
@@ -164,11 +632,22 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/eventos?q=piojos&orden=relevancia",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "eventos"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "eventos"
+              ],
               "query": [
-                { "key": "q", "value": "piojos" },
-                { "key": "orden", "value": "relevancia" }
+                {
+                  "key": "q",
+                  "value": "piojos"
+                },
+                {
+                  "key": "orden",
+                  "value": "relevancia"
+                }
               ]
             }
           }
@@ -180,8 +659,14 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/eventos/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "eventos", "1"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "eventos",
+                "1"
+              ]
             }
           }
         }
@@ -195,9 +680,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-User-Id", "value": "cliente-1" },
-              { "key": "X-User-Role", "value": "CLIENTE" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -205,8 +691,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/reservas",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "reservas"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
             }
           }
         },
@@ -215,9 +706,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-User-Id", "value": "cliente-2" },
-              { "key": "X-User-Role", "value": "CLIENTE" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -225,8 +717,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/reservas",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "reservas"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
             }
           }
         },
@@ -235,9 +732,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-User-Id", "value": "cliente-1" },
-              { "key": "X-User-Role", "value": "CLIENTE" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -245,8 +743,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/compras/confirmar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "compras", "confirmar"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "compras",
+                "confirmar"
+              ]
             }
           }
         },
@@ -254,13 +758,16 @@
           "name": "2.4 Consultar Mis Compras y Entradas Emitidas",
           "request": {
             "method": "GET",
-            "header": [
-              { "key": "X-User-Id", "value": "cliente-1" }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/compras",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "compras"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "compras"
+              ]
             }
           }
         },
@@ -269,8 +776,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-User-Id", "value": "cliente-2" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -278,8 +787,13 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/reservas",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "reservas"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "reservas"
+              ]
             }
           }
         },
@@ -288,8 +802,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-User-Id", "value": "cliente-2" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -297,8 +813,14 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/compras/confirmar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "compras", "confirmar"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "compras",
+                "confirmar"
+              ]
             }
           }
         }
@@ -312,8 +834,10 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-User-Id", "value": "cliente-1" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -321,8 +845,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/devoluciones/entradas/1",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "devoluciones", "entradas", "1"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "devoluciones",
+                "entradas",
+                "1"
+              ]
             }
           }
         },
@@ -331,8 +862,10 @@
           "request": {
             "method": "PUT",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "X-User-Role", "value": "ADMIN" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "body": {
               "mode": "raw",
@@ -340,8 +873,15 @@
             },
             "url": {
               "raw": "{{baseUrl}}/api/devoluciones/1/resolver",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "devoluciones", "1", "resolver"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "devoluciones",
+                "1",
+                "resolver"
+              ]
             }
           }
         },
@@ -349,13 +889,18 @@
           "name": "3.3 Suspender Evento (Admin)",
           "request": {
             "method": "PUT",
-            "header": [
-              { "key": "X-User-Role", "value": "ADMIN" }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/eventos/2/suspender",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "eventos", "2", "suspender"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "eventos",
+                "2",
+                "suspender"
+              ]
             }
           }
         },
@@ -363,13 +908,18 @@
           "name": "3.4 Reactivar Evento (Admin)",
           "request": {
             "method": "PUT",
-            "header": [
-              { "key": "X-User-Role", "value": "ADMIN" }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/eventos/2/reactivar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "eventos", "2", "reactivar"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "eventos",
+                "2",
+                "reactivar"
+              ]
             }
           }
         },
@@ -377,18 +927,32 @@
           "name": "3.5 Cancelar Evento con Reintegro Masivo (Admin)",
           "request": {
             "method": "PUT",
-            "header": [
-              { "key": "X-User-Id", "value": "admin-1" },
-              { "key": "X-User-Role", "value": "ADMIN" }
-            ],
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/eventos/1/cancelar",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "eventos", "1", "cancelar"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "eventos",
+                "1",
+                "cancelar"
+              ]
             }
           }
         }
       ]
     }
-  ]
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt}}",
+        "type": "string"
+      }
+    ]
+  }
 }
