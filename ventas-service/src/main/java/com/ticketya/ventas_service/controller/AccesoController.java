@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Control de Acceso", description = "Validación de entradas con código QR en el ingreso al evento (Req. 8)")
@@ -32,12 +33,8 @@ public class AccesoController {
     @PostMapping("/validar-qr")
     public ResponseEntity<ValidarQrResponseDTO> validarQr(
             @RequestBody ValidarQrRequestDTO dto,
-            @RequestHeader(value = "X-User-Id", defaultValue = "acceso-1") String userId,
-            @RequestHeader(value = "X-User-Role", defaultValue = "PERSONAL_ACCESO") String role) {
-
-        if (!"PERSONAL_ACCESO".equalsIgnoreCase(role) && !"ADMIN".equalsIgnoreCase(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+            Authentication authentication) {
+        String userId = authentication.getName();
         return ResponseEntity.ok(ventasService.validarAccesoQR(dto, userId));
     }
 }

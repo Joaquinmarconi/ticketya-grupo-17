@@ -12,6 +12,7 @@ import com.ticketya.ventas_service.service.VentasServices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.ticketya.ventas_service.dto.SolicitudDevolucionDTO;
 import com.ticketya.ventas_service.dto.ResolverDevolucionDTO;
@@ -38,7 +39,8 @@ public class VentasController {
     @PostMapping("/reservas")
     public ResponseEntity<Reserva> crearReserva(
             @RequestBody ReservaCreateDTO dto,
-            @RequestHeader(value = "X-User-Id", defaultValue = "cliente-1") String clienteId) {
+            Authentication authentication) {
+        String clienteId = authentication.getName();
         Reserva reserva = ventasService.crearReservaTemporal(dto, clienteId);
         return ResponseEntity.status(HttpStatus.CREATED).body(reserva);
     }
@@ -50,7 +52,8 @@ public class VentasController {
     })
     @GetMapping("/reservas")
     public ResponseEntity<List<Reserva>> misReservas(
-            @RequestHeader(value = "X-User-Id", defaultValue = "cliente-1") String clienteId) {
+            Authentication authentication) {
+        String clienteId = authentication.getName();
         return ResponseEntity.ok(ventasService.listarReservasCliente(clienteId));
     }
 
@@ -67,7 +70,8 @@ public class VentasController {
     @PostMapping("/compras/confirmar")
     public ResponseEntity<Compra> confirmarCompra(
             @RequestBody ConfirmarCompraDTO dto,
-            @RequestHeader(value = "X-User-Id", defaultValue = "cliente-1") String clienteId) {
+            Authentication authentication) {
+        String clienteId = authentication.getName();
         Compra compra = ventasService.confirmarCompra(dto, clienteId);
         return ResponseEntity.ok(compra);
     }
@@ -79,7 +83,8 @@ public class VentasController {
     })
     @GetMapping("/compras")
     public ResponseEntity<List<Compra>> misCompras(
-            @RequestHeader(value = "X-User-Id", defaultValue = "cliente-1") String clienteId) {
+            Authentication authentication) {
+        String clienteId = authentication.getName();
         return ResponseEntity.ok(ventasService.listarComprasCliente(clienteId));
     }
 
@@ -96,7 +101,8 @@ public class VentasController {
     public ResponseEntity<Devolucion> solicitarDevolucion(
             @PathVariable Long entradaId,
             @RequestBody SolicitudDevolucionDTO dto,
-            @RequestHeader(value = "X-User-Id", defaultValue = "cliente-1") String clienteId) {
+            Authentication authentication) {
+        String clienteId = authentication.getName();
         
         Devolucion devolucion = ventasService.solicitarDevolucion(entradaId, clienteId, dto);
         
@@ -117,12 +123,8 @@ public class VentasController {
     @PutMapping("/devoluciones/{devolucionId}/resolver")
     public ResponseEntity<Devolucion> resolverDevolucion(
         @PathVariable Long devolucionId,
-        @RequestBody ResolverDevolucionDTO dto,
-        @RequestHeader("X-User-Role") String rol
+        @RequestBody ResolverDevolucionDTO dto
     ){
-        if(!"ADMIN".equals(rol)){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
         if(dto.getAprobar() == null){
             return ResponseEntity.badRequest().build();
         }

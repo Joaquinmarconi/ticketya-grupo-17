@@ -30,12 +30,7 @@ public class LugarController {
     })
     @PostMapping
     public ResponseEntity<Lugar> crearLugar(
-            @RequestBody LugarDTO dto,
-            @RequestHeader(value = "X-User-Role", defaultValue = "ORGANIZADOR") String role) {
-        
-        if (!"ORGANIZADOR".equalsIgnoreCase(role) && !"ADMIN".equalsIgnoreCase(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+            @RequestBody LugarDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(lugarService.crearLugar(dto));
     }
 

@@ -1,6 +1,8 @@
 package com.ticketya.catalogo.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.media.Content;
 import io.swagger.v3.oas.models.media.IntegerSchema;
 import io.swagger.v3.oas.models.media.MediaType;
@@ -9,6 +11,8 @@ import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.media.StringSchema;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.servers.Server;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.responses.ApiResponse;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -25,8 +29,13 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("TicketYa - catalogo-service")
                         .version("1.0")
-                        .description("Lugares, sectores, eventos y búsqueda. En la Entrega 1 el usuario se identifica "
-                                + "con los encabezados X-User-Id y X-User-Role (ADMIN, ORGANIZADOR, CLIENTE)."))
+                        .description("Lugares, sectores, eventos y búsqueda. El usuario se autentica con JWT "
+                                + "y puede tener rol ADMIN, ORGANIZADOR o CLIENTE."))
+                .components(new Components().addSecuritySchemes("bearerAuth",
+                        new SecurityScheme()
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")))
                 .servers(List.of(
                         new Server().url("http://localhost:8080").description("API Gateway"),
                         new Server().url("http://localhost:8081").description("Directo al servicio")));
@@ -50,6 +59,26 @@ public class OpenApiConfig {
                                     new MediaType().schema(new Schema<>().$ref("#/components/schemas/ProblemDetail"))));
                         }
                     })));
+
+            openApi.getPaths().forEach((ruta, pathItem) -> {
+                if (ruta.startsWith("/api/")) {
+                    pathItem.readOperations().forEach(operation -> {
+                        boolean consultaPublica =
+                                (ruta.startsWith("/api/eventos")
+                                        || ruta.startsWith("/api/lugares"))
+                                        && pathItem.getGet() == operation;
+
+                        if (!consultaPublica) {
+                            operation.addSecurityItem(
+                                    new SecurityRequirement().addList("bearerAuth"));
+                            operation.getResponses().addApiResponse("401",
+                                    new ApiResponse().description("Token JWT ausente, invalido o vencido"));
+                            operation.getResponses().addApiResponse("403",
+                                    new ApiResponse().description("El usuario autenticado no tiene el rol requerido"));
+                        }
+                    });
+                }
+            });
         };
     }
 }

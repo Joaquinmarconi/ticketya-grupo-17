@@ -25,3 +25,7 @@ spring:
 ticketya:
   ventas:
     url: http://localhost:8082
+  security:
+    jwt-secret: ${JWT_SECRET:change-this-in-production-change-this-in-production}
+  internal:
+    secret: ${INTERNAL_SERVICE_SECRET:change-this-internal-secret}

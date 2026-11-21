@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Eventos", description = "Creación, publicación, suspensión, cancelación y búsqueda de eventos")
@@ -36,12 +37,8 @@ public class EventoController {
     @PostMapping
     public ResponseEntity<Evento> crearEvento(
             @RequestBody EventoCreateDTO dto,
-            @RequestHeader(value = "X-User-Id", defaultValue = "org-1") String userId,
-            @RequestHeader(value = "X-User-Role", defaultValue = "ORGANIZADOR") String role) {
-
-        if (!"ORGANIZADOR".equalsIgnoreCase(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+            Authentication authentication) {
+        String userId = authentication.getName();
         return ResponseEntity.status(HttpStatus.CREATED).body(eventoService.crearEventoBorrador(dto, userId));
     }
 
@@ -57,12 +54,8 @@ public class EventoController {
     @PutMapping("/{id}/publicar")
     public ResponseEntity<Evento> publicarEvento(
             @PathVariable Long id,
-            @RequestHeader(value = "X-User-Id", defaultValue = "org-1") String userId,
-            @RequestHeader(value = "X-User-Role", defaultValue = "ORGANIZADOR") String role) {
-
-        if (!"ORGANIZADOR".equalsIgnoreCase(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+            Authentication authentication) {
+        String userId = authentication.getName();
         return ResponseEntity.ok(eventoService.publicarEvento(id, userId));
     }
 
@@ -79,12 +72,10 @@ public class EventoController {
     @PutMapping("/{id}/cancelar")
     public ResponseEntity<Evento> cancelarEvento(
             @PathVariable Long id,
-            @RequestHeader(value = "X-User-Id", defaultValue = "admin-1") String userId,
-            @RequestHeader(value = "X-User-Role", defaultValue = "ADMIN") String role) {
-
-        if (!"ADMIN".equalsIgnoreCase(role) && !"ORGANIZADOR".equalsIgnoreCase(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+            Authentication authentication) {
+        String userId = authentication.getName();
+        String role = authentication.getAuthorities().iterator().next()
+                .getAuthority().replace("ROLE_", "");
         return ResponseEntity.ok(eventoService.cancelarEvento(id, userId, role));
     }
 
@@ -99,12 +90,7 @@ public class EventoController {
     })
     @PutMapping("/{id}/suspender")
     public ResponseEntity<Evento> suspenderEvento(
-            @PathVariable Long id,
-            @RequestHeader(value = "X-User-Role", defaultValue = "ADMIN") String role) {
-
-        if (!"ADMIN".equalsIgnoreCase(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+            @PathVariable Long id) {
         return ResponseEntity.ok(eventoService.suspenderEvento(id));
     }
 
@@ -119,12 +105,7 @@ public class EventoController {
     })
     @PutMapping("/{id}/reactivar")
     public ResponseEntity<Evento> reactivarEvento(
-            @PathVariable Long id,
-            @RequestHeader(value = "X-User-Role", defaultValue = "ADMIN") String role) {
-
-        if (!"ADMIN".equalsIgnoreCase(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+            @PathVariable Long id) {
         return ResponseEntity.ok(eventoService.reactivarEvento(id));
     }
 

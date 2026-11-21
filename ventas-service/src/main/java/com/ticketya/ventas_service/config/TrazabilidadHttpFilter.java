@@ -32,12 +32,12 @@ public class TrazabilidadHttpFilter extends OncePerRequestFilter {
             correlationId = UUID.randomUUID().toString();
         }
 
-        String usuario = request.getHeader("X-User-Id");
+        String usuario = (String) request.getAttribute("usuarioId");
         if (usuario == null || usuario.isBlank()) {
             usuario = "anonimo";
         }
 
-        String rol = request.getHeader("X-User-Role");
+        String rol = (String) request.getAttribute("rol");
         if (rol == null || rol.isBlank()) {
             rol = "SIN_ROL";
         }

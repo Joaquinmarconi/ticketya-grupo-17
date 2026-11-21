@@ -3,6 +3,10 @@ server:
 
 
 ticketya:
+  security:
+    jwt-secret: ${JWT_SECRET:change-this-in-production-change-this-in-production}
+  internal:
+    secret: ${INTERNAL_SERVICE_SECRET:change-this-internal-secret}
   catalogo:
     url: http://localhost:8081
 spring:

@@ -409,8 +409,9 @@ public class VentasServices {
 
         // Si es ORGANIZADOR, solo puede consultar reportes de sus propios eventos (US-22)
         if (!"ADMIN".equalsIgnoreCase(rol)
-                && evento.getOrganizadorId() != null
-                && !evento.getOrganizadorId().equals(solicitanteId)) {
+                && (!"ORGANIZADOR".equalsIgnoreCase(rol)
+                || evento.getOrganizadorId() == null
+                || !evento.getOrganizadorId().equals(solicitanteId))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
                     "No tiene permisos para consultar el reporte de un evento de otro organizador");
         }

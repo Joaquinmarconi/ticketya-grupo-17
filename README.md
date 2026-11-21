@@ -66,6 +66,48 @@ cd api-gateway
 .\mvnw spring-boot:run
 ```
 
+### Autenticación JWT
+
+1. Obtener un token:
+```powershell
+Invoke-RestMethod -Method Post -Uri "http://localhost:8080/api/auth/login" `
+  -ContentType "application/json" `
+  -Body '{"username":"cliente-1","password":"cliente123"}'
+```
+
+Usuarios de prueba:
+
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `cliente-1` | `cliente123` | `CLIENTE` |
+| `org-1` | `organizador123` | `ORGANIZADOR` |
+| `admin-1` | `admin123` | `ADMIN` |
+| `acceso-1` | `acceso123` | `PERSONAL_ACCESO` |
+
+Usar el token devuelto en las solicitudes protegidas:
+
+```text
+Authorization: Bearer <token>
+```
+
+El gateway valida el JWT, reemplaza cualquier `X-User-Id` o `X-User-Role` enviado por el cliente y propaga los datos verificados al microservicio. También genera o conserva `X-Correlation-Id`.
+
+En producción se debe definir una clave propia mediante `JWT_SECRET`; no usar la clave por defecto.
+
+Las llamadas internas entre microservicios usan una credencial separada:
+
+```text
+INTERNAL_SERVICE_SECRET=<misma clave secreta larga en catálogo y ventas>
+JWT_SECRET=<misma clave de firma JWT en gateway, catálogo y ventas>
+```
+
+Ejemplo al iniciar los servicios en PowerShell:
+
+```powershell
+$env:JWT_SECRET="ticketya-jwt-clave-secreta-de-al-menos-32-caracteres"
+$env:INTERNAL_SERVICE_SECRET="ticketya-interno-clave-secreta-de-al-menos-32-caracteres"
+```
+
 ---
 
 ## Documentación Técnica Adicional

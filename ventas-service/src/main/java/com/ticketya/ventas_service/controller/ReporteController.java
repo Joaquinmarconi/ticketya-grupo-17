@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Reportes", description = "Reportes de ventas, devoluciones, ocupación y recaudación por sector (Req. 12)")
@@ -29,12 +30,10 @@ public class ReporteController {
     @GetMapping("/eventos/{eventoId}")
     public ResponseEntity<ReporteEventoDTO> obtenerReporteEvento(
             @PathVariable Long eventoId,
-            @RequestHeader(value = "X-User-Id", defaultValue = "org-1") String userId,
-            @RequestHeader(value = "X-User-Role", defaultValue = "ORGANIZADOR") String role) {
-
-        if (!"ORGANIZADOR".equalsIgnoreCase(role) && !"ADMIN".equalsIgnoreCase(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+            Authentication authentication) {
+        String userId = authentication.getName();
+        String role = authentication.getAuthorities().iterator().next()
+                .getAuthority().replace("ROLE_", "");
         return ResponseEntity.ok(ventasService.obtenerReporteEvento(eventoId, userId, role));
     }
 }
